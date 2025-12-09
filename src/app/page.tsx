@@ -177,8 +177,8 @@ export default function Home() {
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-amber-600/20 to-transparent" />
           <div className="absolute top-1/4 left-1/4 w-2 h-8 bg-gradient-to-t from-amber-500 to-transparent rounded-full opacity-60 animate-pulse" />
-          <div className="absolute top-1/3 right-1/4 w-2 h-6 bg-gradient-to-t from-red-500 to-transparent rounded-full opacity-50 animate-pulse delay-150" />
-          <div className="absolute top-1/2 left-1/3 w-2 h-10 bg-gradient-to-t from-amber-400 to-transparent rounded-full opacity-40 animate-pulse delay-300" />
+          <div className="absolute top-1/3 right-1/4 w-2 h-6 bg-gradient-to-t from-red-500 to-transparent rounded-full opacity-50 animate-pulse animation-delay-150" />
+          <div className="absolute top-1/2 left-1/3 w-2 h-10 bg-gradient-to-t from-amber-400 to-transparent rounded-full opacity-40 animate-pulse animation-delay-300" />
         </div>
 
         <div className="relative z-10 text-center px-4 pt-20">

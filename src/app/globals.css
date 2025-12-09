@@ -68,3 +68,12 @@ body {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px rgba(61, 41, 20, 0.15);
 }
+
+/* Animation delay utilities for staggered animations */
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
