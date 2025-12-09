@@ -1,61 +1,50 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function SombreroGame() {
   const [position, setPosition] = useState({ x: 50, y: 50 });
-  const [isVisible, setIsVisible] = useState(true);
   const [caught, setCaught] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [isJumping, setIsJumping] = useState(false);
-  const jumpTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const moveRandomly = useCallback(() => {
-    if (caught) return;
-
-    // Trigger jump animation
-    setIsJumping(true);
-
-    // Clear any existing timeout
-    if (jumpTimeoutRef.current) {
-      clearTimeout(jumpTimeoutRef.current);
-    }
-
-    // Move to new position after a brief moment
-    jumpTimeoutRef.current = setTimeout(() => {
-      const newX = Math.random() * 80 + 10; // 10-90% to keep it visible on mobile
-      const newY = Math.random() * 70 + 15; // 15-85% avoid top nav and bottom button
-      setPosition({ x: newX, y: newY });
-      setIsJumping(false);
-    }, 150);
-
-    // Randomly hide/show to make it trickier (less often on mobile)
-    if (Math.random() > 0.85) {
-      setIsVisible(false);
-      setTimeout(() => setIsVisible(true), 400);
-    }
-  }, [caught]);
+  // Only render on client to avoid hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    if (caught) return;
+    if (!mounted || caught) return;
 
-    // Move faster and more frequently for better mobile experience
-    const interval = setInterval(moveRandomly, 1200 + Math.random() * 800);
+    const moveToNewPosition = () => {
+      const newX = Math.random() * 70 + 15; // 15-85%
+      const newY = Math.random() * 60 + 20; // 20-80%
+      setPosition({ x: newX, y: newY });
+    };
+
+    // Initial position
+    moveToNewPosition();
+
+    // Move every 1.5-2 seconds
+    intervalRef.current = setInterval(() => {
+      moveToNewPosition();
+    }, 1500 + Math.random() * 500);
+
     return () => {
-      clearInterval(interval);
-      if (jumpTimeoutRef.current) {
-        clearTimeout(jumpTimeoutRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
     };
-  }, [moveRandomly, caught]);
+  }, [mounted, caught]);
 
-  const handleCatch = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleCatch = () => {
+    if (caught) return;
     setCaught(true);
     setShowConfetti(true);
-
-    // Hide confetti after animation
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
     setTimeout(() => setShowConfetti(false), 5000);
   };
 
@@ -64,46 +53,54 @@ export default function SombreroGame() {
     setShowConfetti(false);
   };
 
+  // Don't render anything on server
+  if (!mounted) {
+    return null;
+  }
+
   if (caught) {
     return (
       <>
         {/* Confetti */}
         {showConfetti && (
           <div className="fixed inset-0 pointer-events-none z-[9998] overflow-hidden">
-            {[...Array(50)].map((_, i) => (
+            {Array.from({ length: 30 }).map((_, i) => (
               <div
                 key={i}
-                className="absolute animate-bounce"
+                className="absolute"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `-20px`,
-                  fontSize: `${Math.random() * 20 + 15}px`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  animationDuration: `${Math.random() * 3 + 2}s`,
+                  left: `${(i * 3.3) % 100}%`,
+                  top: `-30px`,
+                  fontSize: `${20 + (i % 3) * 5}px`,
+                  animation: `fall ${2 + (i % 3)}s ease-in forwards`,
+                  animationDelay: `${(i % 10) * 0.2}s`,
                 }}
               >
-                {["🎉", "🎊", "🥳", "🤠", "🥩", "🔥", "⭐"][Math.floor(Math.random() * 7)]}
+                {["🎉", "🎊", "🥳", "🤠", "🥩", "🔥", "⭐"][i % 7]}
               </div>
             ))}
           </div>
         )}
 
         {/* Winner Modal */}
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl border-4 border-amber-500 animate-bounce-once">
-            <div className="text-5xl sm:text-6xl mb-4">🤠🎉</div>
-            <h2 className="font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl font-bold text-red-800 mb-4">
+        <div
+          className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border-4 border-amber-500">
+            <div className="text-5xl mb-4">🤠🎉</div>
+            <h2 className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-red-800 mb-3">
               ¡FELICIDADES!
             </h2>
-            <p className="text-lg sm:text-xl text-stone-700 mb-2">
+            <p className="text-lg text-stone-700 mb-2">
               ¡Atrapaste el sombrero!
             </p>
-            <div className="bg-red-700 text-white rounded-xl p-4 my-6">
-              <p className="text-base sm:text-lg font-bold">Tu premio:</p>
-              <p className="text-xl sm:text-2xl font-bold text-amber-400">
+            <div className="bg-red-700 text-white rounded-xl p-4 my-4">
+              <p className="text-base font-bold">Tu premio:</p>
+              <p className="text-xl font-bold text-amber-400">
                 2x1 EN CARNITAS
               </p>
-              <p className="text-xs sm:text-sm mt-2 opacity-90">
+              <p className="text-xs mt-2 opacity-90">
                 Muestra esta pantalla en cualquier sucursal
               </p>
             </div>
@@ -113,13 +110,14 @@ export default function SombreroGame() {
             <div className="flex flex-col gap-3">
               <a
                 href="tel:3781397280"
-                className="bg-red-700 hover:bg-red-600 active:bg-red-800 text-white px-6 py-3 rounded-full font-bold transition-colors"
+                className="bg-red-700 text-white px-6 py-3 rounded-full font-bold block"
               >
                 ¡Llamar para ordenar!
               </a>
               <button
+                type="button"
                 onClick={handleClose}
-                className="text-stone-500 hover:text-stone-700 active:text-stone-900 text-sm underline py-2"
+                className="text-stone-500 text-sm underline py-2"
               >
                 Cerrar y seguir jugando
               </button>
@@ -131,34 +129,30 @@ export default function SombreroGame() {
   }
 
   return (
-    <button
+    <div
       onClick={handleCatch}
-      onTouchEnd={handleCatch}
-      className={`fixed z-[9997] select-none touch-manipulation ${
-        isVisible ? "opacity-100" : "opacity-0"
-      } ${isJumping ? "scale-150" : "scale-100"}`}
+      onTouchStart={handleCatch}
+      role="button"
+      tabIndex={0}
+      className="fixed z-[9997] cursor-pointer"
       style={{
         left: `${position.x}%`,
         top: `${position.y}%`,
         transform: "translate(-50%, -50%)",
-        fontSize: "2.5rem",
-        filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))",
-        transition: isJumping ? "transform 0.15s ease-out" : "left 0.3s ease-out, top 0.3s ease-out, transform 0.15s ease-out, opacity 0.2s ease",
+        transition: "left 0.4s ease-out, top 0.4s ease-out",
         WebkitTapHighlightColor: "transparent",
-        cursor: "pointer",
-        padding: "0.5rem",
+        touchAction: "manipulation",
       }}
-      aria-label="Atrapa el sombrero para ganar un premio"
     >
       <span
-        className={`inline-block ${isJumping ? "animate-ping" : ""}`}
+        className="block text-4xl sm:text-5xl select-none"
         style={{
-          display: "inline-block",
-          animation: isJumping ? "none" : "wiggle 0.5s ease-in-out infinite",
+          filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))",
+          animation: "wiggle 0.6s ease-in-out infinite",
         }}
       >
         🤠
       </span>
-    </button>
+    </div>
   );
 }
