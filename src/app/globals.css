@@ -116,3 +116,13 @@ body {
 .animate-fall {
   animation: fall 3s ease-in forwards;
 }
+
+/* Wiggle animation for sombrero */
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
