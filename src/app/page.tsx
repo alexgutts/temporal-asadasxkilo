@@ -1,4 +1,5 @@
 import { Flame, MapPin, Phone, Clock, ChevronDown } from "lucide-react";
+import SombreroGame from "@/components/SombreroGame";
 
 // Menu data
 const menuKilos = [
@@ -507,6 +508,9 @@ export default function Home() {
           <Phone className="w-6 h-6" />
         </a>
       </div>
+
+      {/* Hidden Easter Egg: Catch the Sombrero Game */}
+      <SombreroGame />
     </div>
   );
 }
